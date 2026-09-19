@@ -1,5 +1,7 @@
+
 import sys
 import os
+import logging
 from pathlib import Path
 
 # Add project root to sys.path
@@ -14,11 +16,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 
 from app.templates_engine import Jinja2Templates
-from app.database import init_db, query_one
+from app.database import init_db, query_one, get_db, save_db_snapshot
 from app.routers import public, auth, oauth, booking, customer, admin
 from app.routers.public import get_common_context
 from app.config import CSRF_COOKIE_NAME
 from app.csrf import generate_csrf_token
+from app.security import hash_password
 
 app = FastAPI(
     title="The Stylezone",
@@ -93,6 +96,40 @@ async def on_startup():
     if not services_exist:
         from scripts.seed_demo import seed_database
         seed_database()
+
+    # One-time admin bootstrap on application startup for deployment environments (e.g. Free Render)
+    admin_exists = query_one("SELECT id FROM users WHERE role = 'admin' LIMIT 1")
+    if admin_exists:
+        logging.info("Admin already exists")
+        print("Admin already exists")
+    else:
+        admin_email = os.getenv("ADMIN_EMAIL", "").strip()
+        admin_password = os.getenv("ADMIN_PASSWORD", "")
+        admin_name = os.getenv("ADMIN_NAME", "").strip()
+
+        if admin_email and admin_password and admin_name:
+            existing_user = query_one("SELECT id FROM users WHERE email = ?", (admin_email.lower(),))
+            with get_db() as conn:
+                if existing_user:
+                    conn.execute(
+                        """
+                        UPDATE users
+                        SET full_name = ?, password_hash = ?, role = 'admin', updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                        """,
+                        (admin_name, hash_password(admin_password), existing_user["id"])
+                    )
+                else:
+                    conn.execute(
+                        """
+                        INSERT INTO users (full_name, email, password_hash, role, created_at, updated_at)
+                        VALUES (?, ?, ?, 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        """,
+                        (admin_name, admin_email.lower(), hash_password(admin_password))
+                    )
+            save_db_snapshot()
+            logging.info("Admin bootstrap completed")
+            print("Admin bootstrap completed")
 
 if __name__ == "__main__":
     import uvicorn
