@@ -1,0 +1,95 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Gallery & Lookbook | The Stylezone Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-page-header">
+    <div>
+        <h1 style="font-size: 1.8rem; margin-bottom: 4px;">Lookbook & Image Management</h1>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">Upload real studio photos or update showcase hairstyles shown in the public lookbook</p>
+    </div>
+    <div>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('add-gallery-modal').classList.add('open')">
+            + Add New Image
+        </button>
+    </div>
+</div>
+
+<div class="lookbook-grid">
+    {% for g in gallery %}
+    <div class="card" style="padding: 16px;">
+        <div style="height: 240px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 14px;">
+            <img src="{{ g.image_url }}" alt="{{ g.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <strong>{{ g.title }}</strong>
+            <span class="badge badge-completed">{{ g.category }}</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">{{ g.description or 'No description' }}</p>
+
+        {% if g.is_placeholder %}
+            <div style="font-size: 0.75rem; color: var(--gold); margin-bottom: 10px;">
+                Demonstration image &bull; Ready to replace
+            </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 8px;">
+            <form action="/admin/gallery/{{ g.id }}/toggle" method="POST" style="flex: 1;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-outline btn-sm btn-block">{{ 'Hide' if g.is_active else 'Show' }}</button>
+            </form>
+            <form action="/admin/gallery/{{ g.id }}/delete" method="POST" onsubmit="return confirm('Delete this image?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: var(--danger);">✕</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal: Add Image -->
+<div class="modal" id="add-gallery-modal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Showcase Image</h3>
+            <button type="button" class="modal-close" data-dismiss="modal">&times;</button>
+        </div>
+        <form action="/admin/gallery/add" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="g_title">Style Title *</label>
+                    <input type="text" id="g_title" name="title" class="form-control" placeholder="e.g. Skin Fade Quiff" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="g_cat">Category *</label>
+                    <select id="g_cat" name="category" class="form-control" required>
+                        <option value="Haircut">Haircut</option>
+                        <option value="Beard">Beard</option>
+                        <option value="Hair + Beard">Hair + Beard</option>
+                        <option value="Styling">Styling</option>
+                        <option value="Grooming">Grooming</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="g_file">Upload Image File (JPG, PNG, WebP, max 5MB)</label>
+                    <input type="file" id="g_file" name="image_file" class="form-control" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="g_url">OR Image URL (if hosted online)</label>
+                    <input type="url" id="g_url" name="image_url" class="form-control" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="g_desc">Description</label>
+                    <textarea id="g_desc" name="description" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save to Lookbook</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

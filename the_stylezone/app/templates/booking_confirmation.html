@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Confirmed | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container container-narrow" style="text-align: center;">
+        <div class="card" style="padding: 50px 30px; border-color: var(--border-color-strong);">
+            <div style="width: 70px; height: 70px; background: rgba(42, 157, 143, 0.2); border: 2px solid #2a9d8f; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px auto; font-size: 2rem; color: #2a9d8f;">
+                ✓
+            </div>
+
+            <span class="section-subtitle">Appointment Confirmed</span>
+            <h1 style="font-size: 2.2rem; margin-bottom: 12px;">We're Ready For You</h1>
+            <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 30px auto;">
+                Your appointment at The Stylezone has been successfully scheduled and secured in our database.
+            </p>
+
+            <div class="booking-summary-receipt" style="max-width: 500px; margin: 0 auto 30px auto; text-align: left;">
+                <div class="receipt-row">
+                    <span style="color: var(--text-muted);">Booking ID:</span>
+                    <strong style="color: var(--gold); font-size: 1.1rem; letter-spacing: 0.05em;">{{ appointment.booking_id }}</strong>
+                </div>
+                <div class="receipt-row">
+                    <span style="color: var(--text-muted);">Service:</span>
+                    <strong>{{ appointment.service_name }}</strong>
+                </div>
+                <div class="receipt-row">
+                    <span style="color: var(--text-muted);">Date:</span>
+                    <strong>{{ appointment.appointment_date }}</strong>
+                </div>
+                <div class="receipt-row">
+                    <span style="color: var(--text-muted);">Time Slot:</span>
+                    <strong style="color: var(--text-gold);">{{ appointment.start_time }} – {{ appointment.end_time }}</strong>
+                </div>
+                <div class="receipt-row">
+                    <span style="color: var(--text-muted);">Customer:</span>
+                    <span>{{ appointment.customer_name }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span style="color: var(--text-muted);">Status:</span>
+                    <span class="badge badge-{{ appointment.status }}">{{ appointment.status|upper }}</span>
+                </div>
+                <div class="receipt-row receipt-total">
+                    <span>Amount Payable:</span>
+                    <span>₹{{ "%.0f"|format(appointment.service_price) }} (Cash at Counter)</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px; color: var(--text-muted); font-size: 0.9rem;">
+                📍 <strong>Shop Address:</strong> {{ settings.address }}
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+                <a href="/account" class="btn btn-primary">View in My Account</a>
+                <a href="/" class="btn btn-outline">Back to Home</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

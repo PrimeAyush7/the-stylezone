@@ -1,0 +1,66 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Holiday Manager | The Stylezone Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-page-header">
+    <div>
+        <h1 style="font-size: 1.8rem; margin-bottom: 4px;">Holidays & Shop Closures</h1>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">Dates added here automatically prevent customer bookings</p>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+    <!-- Add Holiday Form -->
+    <div class="card">
+        <h3 style="font-size: 1.3rem; margin-bottom: 20px;">+ Add Holiday</h3>
+        <form action="/admin/holidays/add" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+                <label class="form-label" for="h_date">Holiday Date *</label>
+                <input type="date" id="h_date" name="date" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="h_reason">Reason / Holiday Name</label>
+                <input type="text" id="h_reason" name="reason" class="form-control" placeholder="e.g. Festival / Maintenance Day">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Add Holiday Closure</button>
+        </form>
+    </div>
+
+    <!-- Holidays List -->
+    <div class="card">
+        <h3 style="font-size: 1.3rem; margin-bottom: 20px;">Scheduled Closures</h3>
+        {% if holidays %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in holidays %}
+                        <tr>
+                            <td><strong style="color: var(--text-gold);">{{ h.date }}</strong></td>
+                            <td>{{ h.reason or 'Holiday' }}</td>
+                            <td>
+                                <form action="/admin/holidays/{{ h.id }}/delete" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <button class="btn btn-outline btn-sm" style="color: var(--danger); border-color: var(--danger);">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="color: var(--text-muted);">No holidays currently scheduled.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

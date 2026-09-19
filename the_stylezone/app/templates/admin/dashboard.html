@@ -1,0 +1,133 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Dashboard | The Stylezone Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-page-header">
+    <div>
+        <h1 style="font-size: 1.8rem; margin-bottom: 4px;">Studio Dashboard</h1>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">Real-time overview of appointments and business metrics</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <a href="/admin/appointments" class="btn btn-primary btn-sm">Manage Appointments</a>
+        <a href="/book" target="_blank" class="btn btn-secondary btn-sm">+ Customer Booking</a>
+    </div>
+</div>
+
+{% if not hours_configured %}
+<div class="alert alert-info" style="border-left: 4px solid var(--warning); margin-bottom: 24px;">
+    <strong>⚠️ Setup Required:</strong> Operating hours have not been configured yet. Customer booking is currently paused. <a href="/admin/hours" style="color: var(--gold); font-weight: 700; text-decoration: underline;">Configure Business Hours &rarr;</a>
+</div>
+{% endif %}
+
+<!-- Metrics Cards -->
+<div class="admin-stats-grid">
+    <div class="stat-card">
+        <div class="stat-title">Today's Bookings</div>
+        <div class="stat-value">{{ metrics.today }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">Pending Confirmation</div>
+        <div class="stat-value" style="color: #f4a261;">{{ metrics.pending }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">Confirmed Upcoming</div>
+        <div class="stat-value" style="color: #2a9d8f;">{{ metrics.confirmed }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">Total Completed</div>
+        <div class="stat-value">{{ metrics.completed }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">Total Customers</div>
+        <div class="stat-value">{{ metrics.customers }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">Estimated Volume</div>
+        <div class="stat-value">₹{{ "%.0f"|format(metrics.revenue) }}</div>
+    </div>
+</div>
+
+<!-- Today's Schedule -->
+<div class="card" style="margin-bottom: 36px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="font-size: 1.3rem;">Today's Appointments</h3>
+        <span class="badge badge-completed">{{ today_appointments|length }} Sessions</span>
+    </div>
+
+    {% if today_appointments %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Client</th>
+                        <th>Phone</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Quick Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in today_appointments %}
+                    <tr>
+                        <td><strong style="color: var(--text-gold);">{{ a.start_time }} – {{ a.end_time }}</strong></td>
+                        <td>{{ a.customer_name }}</td>
+                        <td>{{ a.customer_phone or '—' }}</td>
+                        <td><strong>{{ a.service_name }}</strong> (₹{{ "%.0f"|format(a.service_price) }})</td>
+                        <td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
+                        <td>
+                            <form action="/admin/appointments/{{ a.id }}/status" method="POST" style="display: inline-flex; gap: 6px;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                {% if a.status == 'pending' %}
+                                    <input type="hidden" name="status" value="confirmed">
+                                    <button class="btn btn-primary btn-sm">Confirm</button>
+                                {% elif a.status == 'confirmed' %}
+                                    <input type="hidden" name="status" value="completed">
+                                    <button class="btn btn-secondary btn-sm">Complete</button>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">Completed</span>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="color: var(--text-muted); padding: 10px 0;">No appointments scheduled for today yet.</p>
+    {% endif %}
+</div>
+
+<!-- Recent Bookings Activity -->
+<div class="card">
+    <h3 style="font-size: 1.3rem; margin-bottom: 20px;">Recent Bookings Activity</h3>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Service</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in recent_appointments %}
+                <tr>
+                    <td><code>{{ b.booking_id }}</code></td>
+                    <td>{{ b.customer_name }}</td>
+                    <td>{{ b.appointment_date }}</td>
+                    <td>{{ b.start_time }}</td>
+                    <td>{{ b.service_name }}</td>
+                    <td><span class="badge badge-{{ b.status }}">{{ b.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Lookbook & Styles | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-subtitle">Haircut & Beard Inspiration</span>
+            <h1 class="section-title">The Grooming Lookbook</h1>
+            <p class="section-desc">Explore various hairstyles, fades, beard contours, and executive cuts. Bring any look to your appointment.</p>
+        </div>
+
+        <!-- Demonstration Imagery Disclaimer -->
+        <div class="alert alert-info" style="max-width: 800px; margin: 0 auto 36px auto; text-align: center;">
+            <p style="margin: 0; font-size: 0.9rem;">
+                <strong>Notice:</strong> The lookbook showcases curated male grooming styles for reference and inspiration. Real studio photos can be added through the Admin Panel.
+            </p>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="filter-btn active" data-filter="all">All Styles</button>
+            {% for cat in categories %}
+                <button class="filter-btn" data-filter="{{ cat }}">{{ cat }}</button>
+            {% endfor %}
+        </div>
+
+        <!-- Gallery Grid -->
+        <div class="lookbook-grid" id="lookbook-items-container">
+            {% for item in gallery %}
+            <div class="lookbook-card" data-category="{{ item.category }}">
+                <div class="lookbook-img-box">
+                    <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                    <span class="lookbook-badge">{{ item.category }}</span>
+                </div>
+                <div class="lookbook-body">
+                    <h4 class="lookbook-title">{{ item.title }}</h4>
+                    <p class="lookbook-desc">{{ item.description or 'Distinctive haircut tailored to your head shape.' }}</p>
+                    <a href="/book" class="btn btn-outline btn-sm btn-block">Book This Look</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('#lookbook-items-container .lookbook-card');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const filter = btn.getAttribute('data-filter');
+            cards.forEach(card => {
+                if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}My Account | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <span class="section-subtitle">Client Portal</span>
+                <h1 style="font-size: 2.2rem;">Welcome, {{ user.full_name }}</h1>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Manage your appointments and account details</p>
+            </div>
+            <div>
+                <a href="/book" class="btn btn-primary">+ Book New Appointment</a>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px;">
+            <!-- Left Column: Appointments -->
+            <div>
+                <!-- Upcoming Appointments -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="font-size: 1.3rem;">Upcoming Appointments</h3>
+                        <span class="badge badge-confirmed">{{ upcoming_appointments|length }} Active</span>
+                    </div>
+
+                    {% if upcoming_appointments %}
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            {% for a in upcoming_appointments %}
+                            <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                                        <strong style="font-size: 1.15rem;">{{ a.service_name }}</strong>
+                                        <span class="badge badge-{{ a.status }}">{{ a.status|upper }}</span>
+                                    </div>
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">
+                                        📅 <strong>{{ a.appointment_date }}</strong> at <strong style="color: var(--text-gold);">{{ a.start_time }} – {{ a.end_time }}</strong>
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: var(--text-muted);">
+                                        Booking ID: <code>{{ a.booking_id }}</code> &bull; ₹{{ "%.0f"|format(a.service_price) }} (Cash at Counter)
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <button class="btn btn-outline btn-sm btn-cancel-appt" 
+                                            data-booking-id="{{ a.booking_id }}"
+                                            data-service="{{ a.service_name }}"
+                                            data-datetime="{{ a.appointment_date }} at {{ a.start_time }}"
+                                            style="color: var(--danger); border-color: var(--danger);">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                            <p>You have no upcoming appointments scheduled.</p>
+                            <a href="/book" class="btn btn-secondary btn-sm" style="margin-top: 10px;">Schedule an Appointment</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Past Appointments -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 20px;">Past Appointments</h3>
+                    {% if past_appointments %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Service</th>
+                                        <th>Price</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in past_appointments %}
+                                    <tr>
+                                        <td>{{ p.appointment_date }}</td>
+                                        <td>{{ p.start_time }}</td>
+                                        <td><strong>{{ p.service_name }}</strong></td>
+                                        <td>₹{{ "%.0f"|format(p.service_price) }}</td>
+                                        <td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">No completed past appointments yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Cancelled Appointments -->
+                {% if cancelled_appointments %}
+                <div class="card">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 16px; color: var(--text-muted);">Cancelled History</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        {% for c in cancelled_appointments %}
+                        <div style="font-size: 0.88rem; padding: 10px 14px; background: var(--bg-secondary); border-radius: var(--radius-sm); display: flex; justify-content: space-between;">
+                            <div>
+                                <strong style="text-decoration: line-through;">{{ c.service_name }}</strong> &bull; {{ c.appointment_date }} at {{ c.start_time }}
+                                {% if c.cancellation_reason %}<div style="color: var(--text-muted); font-size: 0.8rem;">Reason: {{ c.cancellation_reason }}</div>{% endif %}
+                            </div>
+                            <span class="badge badge-cancelled">Cancelled</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column: Profile & Security Forms -->
+            <div>
+                <!-- Profile Card -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 20px;">My Profile</h3>
+                    <form action="/account/profile" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                        <div class="form-group">
+                            <label class="form-label" for="full_name">Full Name</label>
+                            <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" id="email" class="form-control" value="{{ user.email }}" disabled>
+                            <small style="color: var(--text-muted); font-size: 0.75rem;">Email cannot be modified.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="e.g. 9876543210">
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-block">Update Profile</button>
+                    </form>
+                </div>
+
+                <!-- Change Password -->
+                <div class="card">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 20px;">Change Password</h3>
+                    <form action="/account/change-password" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                        <div class="form-group">
+                            <label class="form-label" for="curr_pw">Current Password</label>
+                            <input type="password" id="curr_pw" name="current_password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="new_pw">New Password</label>
+                            <input type="password" id="new_pw" name="new_password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="conf_pw">Confirm New Password</label>
+                            <input type="password" id="conf_pw" name="confirm_password" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-outline btn-block">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Cancel Appointment Modal -->
+<div class="modal" id="cancel-appointment-modal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title" style="color: var(--danger);">Cancel Appointment</h3>
+            <button type="button" class="modal-close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="cancel-modal-info" style="margin-bottom: 16px; font-weight: 500;">
+                Are you sure you want to cancel this appointment?
+            </p>
+            <div class="alert alert-info" style="font-size: 0.85rem; margin-bottom: 16px;">
+                <strong>Policy Notice:</strong> Appointments can only be cancelled at least {{ cancellation_window_hours }} hours prior to scheduled time.
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="cancel-reason">Reason for Cancellation (Optional)</label>
+                <textarea id="cancel-reason" class="form-control" rows="2" placeholder="e.g. Rescheduling due to conflict..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-dismiss="modal">Keep Appointment</button>
+            <button type="button" class="btn btn-danger" id="btn-confirm-cancel">Confirm Cancellation</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/customer.js"></script>
+{% endblock %}

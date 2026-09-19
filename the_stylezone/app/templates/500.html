@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section" style="text-align: center; padding: 120px 0;">
+    <div class="container container-narrow">
+        <h1 style="font-size: 5rem; color: var(--danger); font-family: var(--font-heading); margin-bottom: 16px;">500</h1>
+        <h2 style="margin-bottom: 16px;">Server Error</h2>
+        <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 30px auto;">
+            An unexpected error occurred. Please try again or contact support.
+        </p>
+        <a href="/" class="btn btn-primary">Return to Home</a>
+    </div>
+</section>
+{% endblock %}

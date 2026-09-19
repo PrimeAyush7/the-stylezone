@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ settings.business_name }} | Luxury Grooming & Barber in Dwarka Mor, Delhi{% endblock %}</title>
+    <meta name="description" content="{% block meta_desc %}The Stylezone in Dwarka Mor, Delhi offers precision haircuts, beard sculpting, facials, and grooming for the modern gentleman.{% endblock %}">
+    
+    <!-- CSRF Token Meta Tag -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <!-- Open Graph SEO -->
+    <meta property="og:title" content="The Stylezone | Premium Male Grooming">
+    <meta property="og:description" content="Precision Haircuts, Beard Styling & Grooming at Street no 32, Vipin Garden Extension, Dwarka Mor, Delhi.">
+    <meta property="og:type" content="website">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Luxury Black + Gold Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Top Header & Navigation -->
+    <header class="site-header">
+        <div class="container navbar">
+            <a href="/" class="brand-logo" aria-label="The Stylezone Home">
+                <span>THE</span> <span class="brand-gold">STYLEZONE</span>
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/services" class="nav-link">Services</a></li>
+                    <li><a href="/lookbook" class="nav-link">Lookbook</a></li>
+                    <li><a href="/about" class="nav-link">About</a></li>
+                    <li><a href="/contact" class="nav-link">Contact</a></li>
+                </ul>
+            </nav>
+
+            <!-- Actions & Auth -->
+            <div class="nav-actions">
+                <button id="theme-toggle-btn" class="theme-toggle" aria-label="Toggle Dark and Light Mode">
+                    <span id="theme-toggle-icon">☀️</span>
+                </button>
+
+                {% if user %}
+                    {% if user.role == 'admin' %}
+                        <a href="/admin" class="btn btn-secondary btn-sm">Admin Panel</a>
+                    {% else %}
+                        <a href="/account" class="btn btn-secondary btn-sm">My Account</a>
+                    {% endif %}
+                    <a href="/logout" class="btn btn-outline btn-sm" title="Log Out">Logout</a>
+                {% else %}
+                    <a href="/login" class="btn btn-outline btn-sm">Login</a>
+                    <a href="/book" class="btn btn-primary btn-sm">Book Now</a>
+                {% endif %}
+
+                <button id="mobile-menu-toggle" class="mobile-toggle" aria-label="Open Navigation Menu">☰</button>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Menu -->
+        <div id="mobile-drawer" class="mobile-drawer">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/services" class="nav-link">Services & Pricing</a>
+            <a href="/lookbook" class="nav-link">Lookbook / Styles</a>
+            <a href="/about" class="nav-link">About & Craftsmanship</a>
+            <a href="/contact" class="nav-link">Contact & Location</a>
+            <hr style="border-color: var(--border-color); margin: 10px 0;">
+            {% if user %}
+                {% if user.role == 'admin' %}
+                    <a href="/admin" class="btn btn-secondary btn-block">Admin Dashboard</a>
+                {% else %}
+                    <a href="/account" class="btn btn-secondary btn-block">My Account & Bookings</a>
+                {% endif %}
+                <a href="/logout" class="btn btn-outline btn-block">Logout</a>
+            {% else %}
+                <a href="/login" class="btn btn-outline btn-block">Customer Login</a>
+                <a href="/register" class="btn btn-secondary btn-block">Create Account</a>
+                <a href="/book" class="btn btn-primary btn-block">Book Appointment</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Public Footer -->
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <div class="footer-brand">{{ settings.business_name }}</div>
+                <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 16px;">
+                    Refined grooming, bespoke haircuts, and sharp beard sculpts in Dwarka Mor, Delhi.
+                </p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                    <strong>Address:</strong><br>
+                    {{ settings.address }}
+                </p>
+            </div>
+
+            <div>
+                <h4 class="footer-heading">Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/services">Services & Pricing</a></li>
+                    <li><a href="/lookbook">Grooming Lookbook</a></li>
+                    <li><a href="/book">Book Appointment</a></li>
+                    <li><a href="/contact">Location & Hours</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="footer-heading">Services</h4>
+                <ul class="footer-links">
+                    <li><a href="/book?service=1">Haircut — ₹100</a></li>
+                    <li><a href="/book?service=2">Beard Styling — ₹70</a></li>
+                    <li><a href="/book?service=3">Haircut + Beard — ₹150</a></li>
+                    <li><a href="/book?service=4">Facial Treatment — ₹300</a></li>
+                    <li><a href="/book?service=5">D-Tan Treatment — ₹300</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="footer-heading">Contact & Social</h4>
+                <ul class="footer-links">
+                    {% if settings.phone_number %}
+                        <li><a href="tel:{{ settings.phone_number }}">📞 {{ settings.phone_number }}</a></li>
+                    {% endif %}
+                    {% if settings.whatsapp_number %}
+                        <li><a href="https://wa.me/{{ settings.whatsapp_number }}" target="_blank">💬 WhatsApp</a></li>
+                    {% endif %}
+                    {% if settings.instagram_url %}
+                        <li><a href="{{ settings.instagram_url }}" target="_blank">📷 Instagram</a></li>
+                    {% endif %}
+                    {% if settings.google_maps_url %}
+                        <li><a href="{{ settings.google_maps_url }}" target="_blank">📍 Google Maps</a></li>
+                    {% endif %}
+                    {% if not settings.phone_number and not settings.whatsapp_number and not settings.instagram_url %}
+                        <li style="color: var(--text-muted); font-size: 0.85rem;">
+                            Direct contact channels can be configured in the Admin Panel.
+                        </li>
+                    {% endif %}
+                    <li style="margin-top: 10px;">
+                        <a href="/admin/login" style="font-size: 0.8rem; opacity: 0.6;">Admin Access</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="container footer-bottom">
+            <p>{{ settings.footer_text }}</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

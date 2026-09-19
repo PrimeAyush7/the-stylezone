@@ -1,0 +1,94 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Website Content | The Stylezone Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-page-header">
+    <div>
+        <h1 style="font-size: 1.8rem; margin-bottom: 4px;">Website Content & Business Information</h1>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">Update public business details. Unset fields are gracefully hidden on the website.</p>
+    </div>
+</div>
+
+<form action="/admin/content" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <!-- Core Business Info -->
+        <div class="card">
+            <h3 style="font-size: 1.3rem; margin-bottom: 20px;">Identity & Address</h3>
+
+            <div class="form-group">
+                <label class="form-label" for="b_name">Business Name</label>
+                <input type="text" id="b_name" name="business_name" class="form-control" value="{{ settings.business_name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="b_addr">Physical Address</label>
+                <textarea id="b_addr" name="address" class="form-control" rows="2" required>{{ settings.address }}</textarea>
+                <small style="color: var(--text-muted);">Confirmed Location: Street no 32, Vipin Garden Extension, Dwarka Mor, Delhi</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="b_phone">Phone Number</label>
+                <input type="tel" id="b_phone" name="phone_number" class="form-control" value="{{ settings.phone_number or '' }}" placeholder="Enter shop phone number">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="b_wa">WhatsApp Number (e.g. 919876543210)</label>
+                <input type="text" id="b_wa" name="whatsapp_number" class="form-control" value="{{ settings.whatsapp_number or '' }}" placeholder="For WhatsApp chat links">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="b_insta">Instagram URL</label>
+                <input type="url" id="b_insta" name="instagram_url" class="form-control" value="{{ settings.instagram_url or '' }}" placeholder="https://instagram.com/...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="b_maps">Google Maps URL</label>
+                <input type="url" id="b_maps" name="google_maps_url" class="form-control" value="{{ settings.google_maps_url or '' }}" placeholder="https://maps.google.com/...">
+            </div>
+        </div>
+
+        <!-- Copy & Content -->
+        <div class="card">
+            <h3 style="font-size: 1.3rem; margin-bottom: 20px;">Hero & Brand Messaging</h3>
+
+            <div class="form-group">
+                <label class="form-label" for="hero_head">Hero Main Headline</label>
+                <input type="text" id="hero_head" name="hero_headline" class="form-control" value="{{ settings.hero_headline }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="hero_desc">Hero Subheading</label>
+                <textarea id="hero_desc" name="hero_description" class="form-control" rows="3" required>{{ settings.hero_description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="about_txt">About Section Text</label>
+                <textarea id="about_txt" name="about_text" class="form-control" rows="4" required>{{ settings.about_text }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="why_txt">Why Choose Us Text</label>
+                <textarea id="why_txt" name="why_choose_us_text" class="form-control" rows="3" required>{{ settings.why_choose_us_text }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="cancel_win">Cancellation Window Notice (Hours)</label>
+                <input type="number" id="cancel_win" name="cancellation_window_hours" class="form-control" value="{{ settings.cancellation_window_hours or '2' }}" min="0" max="72">
+                <small style="color: var(--text-muted);">Minimum hours in advance a customer is allowed to cancel an appointment.</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="foot_txt">Footer Copyright Text</label>
+                <input type="text" id="foot_txt" name="footer_text" class="form-control" value="{{ settings.footer_text }}">
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <button type="submit" class="btn btn-primary btn-lg">Save Website Content</button>
+    </div>
+</form>
+{% endblock %}

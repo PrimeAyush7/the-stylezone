@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container container-narrow">
+        <div class="section-header">
+            <span class="section-subtitle">Real-Time Scheduling</span>
+            <h1 class="section-title">Book Your Grooming Session</h1>
+            <p class="section-desc">Select a service, pick your preferred date, choose an available time slot, and confirm in seconds.</p>
+        </div>
+
+        {% if not hours_configured %}
+        <div class="alert alert-info" style="border-left: 4px solid var(--warning); margin-bottom: 30px; text-align: center;">
+            <p style="font-size: 1rem; margin: 0;">
+                <strong>Notice:</strong> Business operating hours have not yet been configured by the studio administration. Online slot booking is temporarily disabled. Please contact the studio or check back once hours are set.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Interactive 5-Step Booking Wizard -->
+        <div class="booking-wizard" id="booking-wizard" data-initial-service="{{ selected_service_id or '' }}">
+            <!-- Step Indicators -->
+            <div class="wizard-steps-header">
+                <div class="step-indicator active" id="step-ind-1">
+                    <div class="step-circle">1</div>
+                    <span class="step-label">Service</span>
+                </div>
+                <div class="step-indicator" id="step-ind-2">
+                    <div class="step-circle">2</div>
+                    <span class="step-label">Date</span>
+                </div>
+                <div class="step-indicator" id="step-ind-3">
+                    <div class="step-circle">3</div>
+                    <span class="step-label">Time</span>
+                </div>
+                <div class="step-indicator" id="step-ind-4">
+                    <div class="step-circle">4</div>
+                    <span class="step-label">Details</span>
+                </div>
+                <div class="step-indicator" id="step-ind-5">
+                    <div class="step-circle">5</div>
+                    <span class="step-label">Confirm</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: CHOOSE SERVICE -->
+            <div class="wizard-step-content active" id="wizard-step-1">
+                <h3 style="margin-bottom: 8px; font-size: 1.4rem;">Step 1: Choose Your Service</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">
+                    Select the grooming treatment you wish to schedule.
+                </p>
+
+                <div class="service-select-grid">
+                    {% for s in services %}
+                    <div class="service-select-card" 
+                         data-id="{{ s.id }}" 
+                         data-name="{{ s.name }}" 
+                         data-price="{{ s.price }}" 
+                         data-duration="{{ s.duration_minutes }}">
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-primary);">{{ s.name }}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">⏱ {{ s.duration_minutes }} Minutes</div>
+                        </div>
+                        <div style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; color: var(--text-gold);">
+                            ₹{{ "%.0f"|format(s.price) }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 32px;">
+                    <button type="button" class="btn btn-primary" id="btn-step1-next" disabled>
+                        Next: Select Date &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: CHOOSE DATE -->
+            <div class="wizard-step-content" id="wizard-step-2">
+                <h3 style="margin-bottom: 8px; font-size: 1.4rem;">Step 2: Choose Appointment Date</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">
+                    Pick an upcoming date within the next 60 days.
+                </p>
+
+                <div class="form-group" style="max-width: 400px; margin: 0 auto 30px auto;">
+                    <label class="form-label" for="booking-date">Appointment Date</label>
+                    <input type="date" id="booking-date" class="form-control" style="font-size: 1.1rem; text-align: center;">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+                    <button type="button" class="btn btn-outline" id="btn-step2-prev">&larr; Back to Services</button>
+                    <button type="button" class="btn btn-primary" id="btn-step2-next">Next: View Time Slots &rarr;</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: CHOOSE TIME SLOT (Real Backend Calculation) -->
+            <div class="wizard-step-content" id="wizard-step-3">
+                <h3 style="margin-bottom: 8px; font-size: 1.4rem;">Step 3: Select Available Time Slot</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 16px;">
+                    Availability is calculated in real-time according to business hours, holidays, and active bookings.
+                </p>
+
+                <div id="slots-loading" style="display: none; text-align: center; padding: 40px;">
+                    <div style="color: var(--gold); font-size: 1.5rem; margin-bottom: 10px;">⏳</div>
+                    <p style="color: var(--text-muted);">Checking studio availability...</p>
+                </div>
+
+                <div id="slots-error" class="alert alert-danger" style="display: none;"></div>
+
+                <div id="slots-container" class="slots-grid"></div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+                    <button type="button" class="btn btn-outline" id="btn-step3-prev">&larr; Back to Date</button>
+                    <button type="button" class="btn btn-primary" id="btn-step3-next" disabled>Next: Your Details &rarr;</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: CUSTOMER DETAILS -->
+            <div class="wizard-step-content" id="wizard-step-4">
+                <h3 style="margin-bottom: 8px; font-size: 1.4rem;">Step 4: Your Contact Details</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">
+                    Enter your details to register or link this appointment to your account.
+                </p>
+
+                {% if not user %}
+                <div class="alert alert-info" style="margin-bottom: 20px;">
+                    <span>Have an account? <a href="/login?return_to=/book" style="font-weight: 700;">Log in here</a> to auto-fill your details.</span>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label" for="cust-name">Full Name *</label>
+                    <input type="text" id="cust-name" class="form-control" 
+                           value="{{ user.full_name if user else '' }}" placeholder="e.g. John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="cust-email">Email Address *</label>
+                    <input type="email" id="cust-email" class="form-control" 
+                           value="{{ user.email if user else '' }}" placeholder="e.g. john@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="cust-phone">Phone Number (Optional)</label>
+                    <input type="tel" id="cust-phone" class="form-control" 
+                           value="{{ user.phone if user and user.phone else '' }}" placeholder="e.g. 9876543210">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="cust-notes">Special Requests / Notes (Optional)</label>
+                    <textarea id="cust-notes" class="form-control" rows="2" placeholder="e.g. Skin fade with textured top..."></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+                    <button type="button" class="btn btn-outline" id="btn-step4-prev">&larr; Back to Time</button>
+                    <button type="button" class="btn btn-primary" id="btn-step4-next">Review Summary &rarr;</button>
+                </div>
+            </div>
+
+            <!-- STEP 5: REVIEW & CONFIRM -->
+            <div class="wizard-step-content" id="wizard-step-5">
+                <h3 style="margin-bottom: 8px; font-size: 1.4rem;">Step 5: Review & Confirm Appointment</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">
+                    Please verify your appointment details before submission.
+                </p>
+
+                <div class="booking-summary-receipt">
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Studio:</span>
+                        <strong>The Stylezone (Dwarka Mor, Delhi)</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Service:</span>
+                        <strong id="rec-service-name">-</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Duration:</span>
+                        <span id="rec-duration">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Date:</span>
+                        <strong id="rec-date">-</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Time Slot:</span>
+                        <strong id="rec-time" style="color: var(--text-gold);">-</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Customer:</span>
+                        <span id="rec-cust-name">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Email:</span>
+                        <span id="rec-cust-email">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Phone:</span>
+                        <span id="rec-cust-phone">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Notes:</span>
+                        <span id="rec-notes">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span style="color: var(--text-muted);">Payment:</span>
+                        <span style="color: #2a9d8f; font-weight: 600;">Pay at Counter</span>
+                    </div>
+                    <div class="receipt-row receipt-total">
+                        <span>Total Due at Studio:</span>
+                        <span id="rec-total-price">₹0</span>
+                    </div>
+                </div>
+
+                <div id="submit-booking-error" class="alert alert-danger" style="display: none;"></div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+                    <button type="button" class="btn btn-outline" id="btn-step5-prev">&larr; Edit Details</button>
+                    <button type="button" class="btn btn-primary btn-lg" id="btn-confirm-booking">
+                        Confirm Appointment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/booking.js"></script>
+{% endblock %}

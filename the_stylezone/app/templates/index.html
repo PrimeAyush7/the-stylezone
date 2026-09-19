@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-section">
+    <div class="container hero-grid">
+        <div class="hero-content">
+            <span class="hero-badge">Dwarka Mor, Delhi &bull; Precision Craft</span>
+            <h1 class="hero-title">
+                {{ settings.hero_headline }}
+            </h1>
+            <p class="hero-description">
+                {{ settings.hero_description }}
+            </p>
+            <div class="hero-actions">
+                <a href="/book" class="btn btn-primary btn-lg">Book Appointment</a>
+                <a href="/services" class="btn btn-secondary btn-lg">View Services</a>
+            </div>
+            <div class="hero-location-bar">
+                <span>📍</span>
+                <span><strong>Location:</strong> {{ settings.address }}</span>
+            </div>
+        </div>
+
+        <div class="hero-image-wrapper">
+            <div class="hero-image-frame">
+                <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1000&auto=format&fit=crop&q=80" 
+                     alt="The Stylezone Luxury Barber Grooming" loading="lazy">
+                <div class="hero-image-disclaimer">
+                    Demonstration imagery &bull; Replace with authentic shop photos in Admin Panel
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SHORT BUSINESS INTRODUCTION -->
+<section class="section">
+    <div class="container" style="text-align: center; max-width: 860px;">
+        <span class="section-subtitle">About The Stylezone</span>
+        <h2 class="section-title">Elevate Your Signature Look</h2>
+        <p class="section-desc" style="line-height: 1.8;">
+            {{ settings.about_text }}
+        </p>
+    </div>
+</section>
+
+<!-- SERVICES SECTION (Real DB items) -->
+<section class="section section-bg">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-subtitle">Tailored Menu</span>
+            <h2 class="section-title">Grooming Services & Pricing</h2>
+            <p class="section-desc">Transparent rates for precision cuts, beard sculpting, and facial treatments.</p>
+        </div>
+
+        <div class="services-grid">
+            {% for s in services %}
+            <div class="card service-card">
+                <div>
+                    <div class="service-card-header">
+                        <h3 class="service-name">{{ s.name }}</h3>
+                        <span class="service-price">₹{{ "%.0f"|format(s.price) }}</span>
+                    </div>
+                    <div class="service-meta">
+                        <span>⏱ {{ s.duration_minutes }} Minutes</span>
+                        <span>&bull;</span>
+                        <span>Dwarka Mor Studio</span>
+                    </div>
+                    <p class="service-desc">{{ s.description or 'Professional grooming service by expert stylists.' }}</p>
+                </div>
+                <a href="/book?service={{ s.id }}" class="btn btn-secondary btn-block">Book This Service</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="text-align: center; margin-top: 50px;">
+            <a href="/services" class="btn btn-outline">Explore Full Service Details &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- LOOKBOOK PREVIEW -->
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-subtitle">Style Inspiration</span>
+            <h2 class="section-title">Lookbook & Haircut Gallery</h2>
+            <p class="section-desc">Diverse hairstyles and beard contours. Model photography for styling demonstration.</p>
+        </div>
+
+        <div class="lookbook-grid">
+            {% for item in gallery %}
+            <div class="lookbook-card">
+                <div class="lookbook-img-box">
+                    <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                    <span class="lookbook-badge">{{ item.category }}</span>
+                </div>
+                <div class="lookbook-body">
+                    <h4 class="lookbook-title">{{ item.title }}</h4>
+                    <p class="lookbook-desc">{{ item.description or 'Tailored masculine style' }}</p>
+                    <a href="/book" class="btn btn-outline btn-sm btn-block">Request This Style</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="/lookbook" class="btn btn-secondary">Browse Complete Lookbook &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- WHY CHOOSE US -->
+<section class="section section-bg">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-subtitle">Our Standard</span>
+            <h2 class="section-title">Why Choose The Stylezone</h2>
+            <p class="section-desc">{{ settings.why_choose_us_text }}</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 2.4rem; color: var(--gold); margin-bottom: 16px;">✂️</div>
+                <h3 style="margin-bottom: 12px; font-size: 1.3rem;">Master Cut & Fade</h3>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                    Precision scissor work and seamless skin tapers crafted to complement your facial structure.
+                </p>
+            </div>
+
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 2.4rem; color: var(--gold); margin-bottom: 16px;">🧔</div>
+                <h3 style="margin-bottom: 12px; font-size: 1.3rem;">Beard Contouring</h3>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                    Sharp razor edges, mustache balance, and symmetrical beard trimming that redefine your jawline.
+                </p>
+            </div>
+
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 2.4rem; color: var(--gold); margin-bottom: 16px;">✨</div>
+                <h3 style="margin-bottom: 12px; font-size: 1.3rem;">Facial & Skin Care</h3>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                    Deep pore cleansing and targeted D-Tan skin revitalization to clear pollutants and restore clarity.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- REVIEWS SECTION -->
+{% if reviews %}
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-subtitle">Testimonials</span>
+            <h2 class="section-title">Client Feedback</h2>
+            <p class="section-desc">Reviews and service experiences.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            {% for r in reviews %}
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <div style="color: var(--gold); font-size: 1.1rem;">
+                        {% for i in range(r.rating) %}★{% endfor %}
+                    </div>
+                    {% if r.is_demo %}
+                        <span class="badge badge-demo">DEMO REVIEW</span>
+                    {% endif %}
+                </div>
+                <p style="font-style: italic; color: var(--text-secondary); margin-bottom: 20px;">
+                    "{{ r.content }}"
+                </p>
+                <div style="border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
+                    <strong>{{ r.author_name }}</strong>
+                    <span>{{ r.service_mentioned or 'Grooming' }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- BOOKING CALL TO ACTION -->
+<section class="section section-bg" style="border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+    <div class="container" style="text-align: center; max-width: 700px;">
+        <h2 class="section-title" style="margin-bottom: 20px;">Ready For Your Next Grooming Session?</h2>
+        <p class="section-desc" style="margin-bottom: 36px;">
+            Select your preferred haircut or beard service and secure an available time slot online.
+        </p>
+        <a href="/book" class="btn btn-primary btn-lg">Book Your Appointment Now</a>
+    </div>
+</section>
+
+<!-- LOCATION / MAP SECTION -->
+<section class="section">
+    <div class="container" style="max-width: 900px;">
+        <div class="card" style="padding: 40px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <span class="section-subtitle">Visit Us</span>
+                <h2 style="font-size: 2rem; margin-bottom: 12px;">Shop Location</h2>
+                <p style="color: var(--text-secondary); font-size: 1.1rem;">
+                    {{ settings.address }}
+                </p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center;">
+                <div>
+                    <h4 style="color: var(--gold); margin-bottom: 12px;">Hours of Operation</h4>
+                    {% if hours_configured %}
+                    <ul style="list-style: none; font-size: 0.95rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px;">
+                        {% for h in hours %}
+                        <li style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                            <span>{{ h.day_name }}</span>
+                            <span>
+                                {% if h.is_open and h.open_time and h.close_time %}
+                                    {{ h.open_time }} – {{ h.close_time }}
+                                {% else %}
+                                    <span style="color: var(--danger);">Closed</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="alert alert-info" style="font-size: 0.88rem;">
+                        Operating hours have not yet been configured. Please check back soon or manage in the Admin Panel.
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div style="text-align: center; padding: 24px; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <div style="font-size: 3rem; color: var(--gold); margin-bottom: 12px;">📍</div>
+                    <h4 style="margin-bottom: 8px;">Dwarka Mor, Delhi</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">
+                        Street no 32, Vipin Garden Extension
+                    </p>
+                    {% if settings.google_maps_url %}
+                        <a href="{{ settings.google_maps_url }}" target="_blank" class="btn btn-outline btn-sm">Get Directions on Maps</a>
+                    {% else %}
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">
+                            Google Maps link can be configured in Admin.
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

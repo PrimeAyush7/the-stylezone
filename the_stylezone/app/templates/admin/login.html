@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Login | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container container-narrow" style="max-width: 460px;">
+        <div class="card" style="padding: 40px 30px; border-color: var(--gold);">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <span class="section-subtitle">Restricted Access</span>
+                <h1 style="font-size: 1.8rem; color: var(--gold);">Admin Portal</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to manage bookings, services, and content</p>
+            </div>
+
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            <form action="/admin/login" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Admin Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="admin@example.com" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Admin Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 10px;">
+                    Enter Admin Dashboard
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="/" class="btn btn-outline btn-sm">&larr; Return to Public Site</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

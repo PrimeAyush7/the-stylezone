@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section" style="text-align: center; padding: 120px 0;">
+    <div class="container container-narrow">
+        <h1 style="font-size: 5rem; color: var(--gold); font-family: var(--font-heading); margin-bottom: 16px;">404</h1>
+        <h2 style="margin-bottom: 16px;">Page Not Found</h2>
+        <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 30px auto;">
+            The page you are looking for does not exist or has been moved.
+        </p>
+        <a href="/" class="btn btn-primary">Return to Home</a>
+    </div>
+</section>
+{% endblock %}

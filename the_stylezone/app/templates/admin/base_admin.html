@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard | The Stylezone{% endblock %}</title>
+    
+    <!-- CSRF Token Meta Tag -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Top Bar -->
+    <header class="site-header">
+        <div class="container navbar">
+            <a href="/admin" class="brand-logo">
+                <span>STYLEZONE</span> <span class="brand-gold">ADMIN</span>
+            </a>
+            <div class="nav-actions">
+                <button id="theme-toggle-btn" class="theme-toggle" title="Toggle Theme">
+                    <span id="theme-toggle-icon">☀️</span>
+                </button>
+                <a href="/" target="_blank" class="btn btn-outline btn-sm">View Website &nearr;</a>
+                <span style="font-size: 0.9rem; color: var(--text-muted);">{{ user.full_name }}</span>
+                <a href="/admin/logout" class="btn btn-danger btn-sm">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Layout with Sidebar -->
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <ul class="admin-sidebar-menu">
+                <li><a href="/admin" class="admin-sidebar-link {% if request.url.path == '/admin' %}active{% endif %}">📊 Dashboard</a></li>
+                <li><a href="/admin/appointments" class="admin-sidebar-link {% if '/admin/appointments' in request.url.path %}active{% endif %}">📅 Appointments</a></li>
+                <li><a href="/admin/calendar" class="admin-sidebar-link {% if '/admin/calendar' in request.url.path %}active{% endif %}">🗓 Daily Calendar & Blocks</a></li>
+                <li><a href="/admin/services" class="admin-sidebar-link {% if '/admin/services' in request.url.path %}active{% endif %}">✂️ Services & Pricing</a></li>
+                <li><a href="/admin/hours" class="admin-sidebar-link {% if '/admin/hours' in request.url.path %}active{% endif %}">⏰ Business Hours</a></li>
+                <li><a href="/admin/holidays" class="admin-sidebar-link {% if '/admin/holidays' in request.url.path %}active{% endif %}">🏖 Holidays</a></li>
+                <li><a href="/admin/gallery" class="admin-sidebar-link {% if '/admin/gallery' in request.url.path %}active{% endif %}">🖼 Lookbook Gallery</a></li>
+                <li><a href="/admin/content" class="admin-sidebar-link {% if '/admin/content' in request.url.path %}active{% endif %}">📝 Website Content</a></li>
+                <li><a href="/admin/reviews" class="admin-sidebar-link {% if '/admin/reviews' in request.url.path %}active{% endif %}">⭐ Reviews & Demo</a></li>
+                <li><a href="/admin/customers" class="admin-sidebar-link {% if '/admin/customers' in request.url.path %}active{% endif %}">👥 Customers</a></li>
+            </ul>
+        </aside>
+
+        <main class="admin-content">
+            {% if request.query_params.get('success') %}
+                <div class="alert alert-success">{{ request.query_params.get('success') }}</div>
+            {% endif %}
+            {% if request.query_params.get('error') %}
+                <div class="alert alert-danger">{{ request.query_params.get('error') }}</div>
+            {% endif %}
+            {% if request.query_params.get('notice') %}
+                <div class="alert alert-info">{{ request.query_params.get('notice') }}</div>
+            {% endif %}
+
+            {% block admin_content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/admin.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

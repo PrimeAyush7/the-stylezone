@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Location & Contact | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container" style="max-width: 960px;">
+        <div class="section-header">
+            <span class="section-subtitle">Visit Us in Delhi</span>
+            <h1 class="section-title">Location & Opening Hours</h1>
+            <p class="section-desc">Conveniently situated in Dwarka Mor, Delhi.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <!-- Address & Contact Info -->
+            <div class="card">
+                <h3 style="color: var(--gold); margin-bottom: 20px; font-size: 1.4rem;">Business Address</h3>
+                <p style="font-size: 1.1rem; color: var(--text-primary); line-height: 1.6; margin-bottom: 24px;">
+                    📍 <strong>The Stylezone</strong><br>
+                    {{ settings.address }}
+                </p>
+
+                <h4 style="color: var(--text-gold); font-size: 1.1rem; margin-bottom: 12px;">Contact Information</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 24px;">
+                    {% if settings.phone_number %}
+                        <li>📞 Phone: <a href="tel:{{ settings.phone_number }}">{{ settings.phone_number }}</a></li>
+                    {% endif %}
+                    {% if settings.whatsapp_number %}
+                        <li>💬 WhatsApp: <a href="https://wa.me/{{ settings.whatsapp_number }}" target="_blank">Chat with us</a></li>
+                    {% endif %}
+                    {% if settings.instagram_url %}
+                        <li>📷 Instagram: <a href="{{ settings.instagram_url }}" target="_blank">View Profile</a></li>
+                    {% endif %}
+                    {% if not settings.phone_number and not settings.whatsapp_number and not settings.instagram_url %}
+                        <li style="color: var(--text-muted);">Contact telephone and social channels can be configured in the Admin Panel.</li>
+                    {% endif %}
+                </ul>
+
+                {% if settings.google_maps_url %}
+                    <a href="{{ settings.google_maps_url }}" target="_blank" class="btn btn-secondary btn-block">Open in Google Maps</a>
+                {% endif %}
+            </div>
+
+            <!-- Operating Hours -->
+            <div class="card">
+                <h3 style="color: var(--gold); margin-bottom: 20px; font-size: 1.4rem;">Opening Hours</h3>
+                {% if hours_configured %}
+                <ul style="list-style: none; font-size: 0.95rem; display: flex; flex-direction: column; gap: 10px;">
+                    {% for h in hours %}
+                    <li style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <span style="font-weight: 500;">{{ h.day_name }}</span>
+                        <span>
+                            {% if h.is_open and h.open_time and h.close_time %}
+                                <strong style="color: var(--text-gold);">{{ h.open_time }} – {{ h.close_time }}</strong>
+                            {% else %}
+                                <span style="color: var(--danger); font-weight: 600;">Closed</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="alert alert-info" style="font-size: 0.9rem; margin-bottom: 20px;">
+                    Operating hours have not yet been configured by studio administration. Please check back soon.
+                </div>
+                {% endif %}
+
+                <div style="margin-top: 30px; text-align: center;">
+                    <a href="/book" class="btn btn-primary btn-block">Schedule Online Appointment</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

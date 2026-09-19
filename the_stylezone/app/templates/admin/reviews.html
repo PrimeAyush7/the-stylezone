@@ -1,0 +1,94 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Reviews & Testimonials | The Stylezone Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-page-header">
+    <div>
+        <h1 style="font-size: 1.8rem; margin-bottom: 4px;">Reviews & Testimonials</h1>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">Manage client feedback. Demo reviews are clearly marked and can be removed with one click.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <form action="/admin/reviews/clear-demos" method="POST" onsubmit="return confirm('Permanently delete all DEMO reviews?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-outline btn-sm" style="color: var(--warning); border-color: var(--warning);">
+                🗑 Remove All Demo Reviews
+            </button>
+        </form>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('add-review-modal').classList.add('open')">
+            + Add Review
+        </button>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+    {% for r in reviews %}
+    <div class="card" style="opacity: {{ '1' if r.is_active else '0.5' }};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="color: var(--gold);">
+                {% for i in range(r.rating) %}★{% endfor %}
+            </div>
+            {% if r.is_demo %}
+                <span class="badge badge-demo">DEMO</span>
+            {% endif %}
+        </div>
+        <p style="font-style: italic; color: var(--text-secondary); margin-bottom: 16px;">
+            "{{ r.content }}"
+        </p>
+        <div style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-bottom: 14px; font-size: 0.88rem; color: var(--text-muted);">
+            <strong>{{ r.author_name }}</strong> &bull; {{ r.service_mentioned or 'General' }}
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <form action="/admin/reviews/{{ r.id }}/toggle" method="POST" style="flex: 1;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-outline btn-sm btn-block">{{ 'Hide' if r.is_active else 'Show' }}</button>
+            </form>
+            <form action="/admin/reviews/{{ r.id }}/delete" method="POST" onsubmit="return confirm('Delete this review?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: var(--danger);">✕</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal: Add Review -->
+<div class="modal" id="add-review-modal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Client Review</h3>
+            <button type="button" class="modal-close" data-dismiss="modal">&times;</button>
+        </div>
+        <form action="/admin/reviews/add" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="rev_author">Author Name *</label>
+                    <input type="text" id="rev_author" name="author_name" class="form-control" placeholder="e.g. Aman Sharma" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="rev_rating">Rating (Stars) *</label>
+                    <select id="rev_rating" name="rating" class="form-control">
+                        <option value="5">5 Stars ★★★★★</option>
+                        <option value="4">4 Stars ★★★★☆</option>
+                        <option value="3">3 Stars ★★★☆☆</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="rev_service">Service Mentioned</label>
+                    <input type="text" id="rev_service" name="service_mentioned" class="form-control" placeholder="e.g. Haircut + Beard">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="rev_content">Review Content *</label>
+                    <textarea id="rev_content" name="content" class="form-control" rows="3" placeholder="Client comments..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Review</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

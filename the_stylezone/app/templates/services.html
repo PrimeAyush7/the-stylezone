@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Services & Pricing | {{ settings.business_name }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-subtitle">Our Grooming Menu</span>
+            <h1 class="section-title">Services & Transparent Pricing</h1>
+            <p class="section-desc">Every service is executed with dedicated attention, razor precision, and premium grooming products.</p>
+        </div>
+
+        <div class="services-grid">
+            {% for s in services %}
+            <div class="card service-card">
+                <div>
+                    <div class="service-card-header">
+                        <h3 class="service-name">{{ s.name }}</h3>
+                        <span class="service-price">₹{{ "%.0f"|format(s.price) }}</span>
+                    </div>
+                    <div class="service-meta">
+                        <span>⏱ {{ s.duration_minutes }} Minutes</span>
+                        <span>&bull;</span>
+                        <span>Professional Grooming</span>
+                    </div>
+                    <p class="service-desc">{{ s.description or 'Tailored grooming treatment for a distinguished masculine profile.' }}</p>
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <a href="/book?service={{ s.id }}" class="btn btn-primary btn-block">Book This Service</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="card" style="margin-top: 60px; text-align: center; border-color: var(--border-color-strong); background: var(--bg-secondary);">
+            <h3 style="font-size: 1.5rem; margin-bottom: 10px;">Looking for a Custom Package?</h3>
+            <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto 24px auto;">
+                Combine our signature haircut, beard grooming, facial, and D-Tan treatments to match your exact styling schedule.
+            </p>
+            <a href="/book" class="btn btn-secondary">Select Service in Booking Wizard &rarr;</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
