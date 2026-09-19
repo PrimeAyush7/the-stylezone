@@ -1,4 +1,3 @@
-
 import logging
 import secrets
 from typing import Optional
@@ -248,9 +247,17 @@ async def google_callback(
 
 @router.get("/facebook")
 async def facebook_login(request: Request):
-    """Facebook OAuth flow."""
+    """
+    Facebook OAuth flow initiation.
+    Uses 'public_profile' scope (standard supported scope on Meta Facebook Login apps).
+    Avoids requesting unapproved 'email' scope which causes Meta error 'Invalid Scopes: email'.
+    """
     if not FACEBOOK_CLIENT_ID or not FACEBOOK_CLIENT_SECRET:
-        redirect_uri = f"{APP_URL.rstrip('/')}/auth/facebook/callback"
+        ctx = get_common_context(request)
+        ctx["provider"] = "Facebook"
+        ctx["client_id_var"] = "FACEBOOK_CLIENT_ID"
+        ctx["secret_var"] = "FACEBOOK_CLIENT_SECRET"
+        ctx["redirect_uri"] = f"{APP_URL.rstrip('/')}/auth/facebook/callback"
         return HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>
@@ -272,7 +279,7 @@ async def facebook_login(request: Request):
                     <ol style="margin-left:20px; margin-top:10px;">
                         <li>Go to <a href="https://developers.facebook.com" target="_blank" style="color:var(--gold);">Meta for Developers</a>.</li>
                         <li>Create an App and add Facebook Login.</li>
-                        <li>Add OAuth Redirect URI: <code>{redirect_uri}</code></li>
+                        <li>Add OAuth Redirect URI: <code>{ctx['redirect_uri']}</code></li>
                         <li>Add to <code>.env</code>:
                             <pre style="background:#000; padding:10px; border-radius:6px; margin-top:8px; color:var(--gold-light);">FACEBOOK_CLIENT_ID=your-facebook-app-id
 FACEBOOK_CLIENT_SECRET=your-facebook-app-secret</pre>
@@ -289,18 +296,176 @@ FACEBOOK_CLIENT_SECRET=your-facebook-app-secret</pre>
 
     redirect_uri = f"{APP_URL.rstrip('/')}/auth/facebook/callback"
     fb_url = (
-        f"https://www.facebook.com/v16.0/dialog/oauth?"
+        f"https://www.facebook.com/v26.0/dialog/oauth?"
         f"client_id={FACEBOOK_CLIENT_ID}&"
         f"redirect_uri={redirect_uri}&"
-        f"scope=email,public_profile"
+        f"scope=public_profile&"
+        f"state=stylezone_facebook"
     )
     return RedirectResponse(fb_url)
 
 @router.get("/facebook/callback")
-async def facebook_callback(request: Request, code: str = None, error: str = None):
-    if error or not code:
-        return RedirectResponse("/login?error=Facebook+login+cancelled", status_code=status.HTTP_303_SEE_OTHER)
-    return RedirectResponse("/account", status_code=status.HTTP_303_SEE_OTHER)
+async def facebook_callback(
+    request: Request,
+    code: Optional[str] = None,
+    error: Optional[str] = None,
+    error_reason: Optional[str] = None,
+    error_description: Optional[str] = None,
+    state: Optional[str] = None
+):
+    """
+    Facebook OAuth 2.0 callback handler.
+    Exchanges code for access token, fetches profile from Graph API,
+    safely handles accounts with or without email, links or creates customer account,
+    creates database session, and sets stylezone_session HTTP-only cookie before redirecting to /account.
+    """
+    if error or error_reason or error_description:
+        logger.warning("Facebook OAuth returned error: %s - %s", error, error_description)
+        return RedirectResponse("/login?error=Facebook+sign-in+was+cancelled+or+denied", status_code=status.HTTP_303_SEE_OTHER)
+
+    if not code:
+        logger.warning("Facebook OAuth callback invoked without authorization code")
+        return RedirectResponse("/login?error=Authorization+code+missing+from+Facebook", status_code=status.HTTP_303_SEE_OTHER)
+
+    if not FACEBOOK_CLIENT_ID or not FACEBOOK_CLIENT_SECRET:
+        logger.error("Facebook OAuth credentials missing during callback handling")
+        return RedirectResponse("/login?error=Facebook+OAuth+is+not+properly+configured", status_code=status.HTTP_303_SEE_OTHER)
+
+    redirect_uri = f"{APP_URL.rstrip('/')}/auth/facebook/callback"
+
+    # Step 1: Exchange authorization code for user access token
+    token_url = "https://graph.facebook.com/v26.0/oauth/access_token"
+    token_params = {
+        "client_id": FACEBOOK_CLIENT_ID,
+        "client_secret": FACEBOOK_CLIENT_SECRET,
+        "redirect_uri": redirect_uri,
+        "code": code,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as http_client:
+            token_response = await http_client.get(
+                token_url,
+                params=token_params,
+                headers={"Accept": "application/json"}
+            )
+    except Exception as exc:
+        logger.error("Network error during Facebook token exchange: %s", type(exc).__name__)
+        return RedirectResponse("/login?error=Unable+to+connect+to+Facebook.+Please+try+again.", status_code=status.HTTP_303_SEE_OTHER)
+
+    if token_response.status_code != 200:
+        logger.error("Facebook token exchange failed with HTTP %d: %s", token_response.status_code, token_response.text[:200])
+        return RedirectResponse("/login?error=Failed+to+exchange+authorization+code+with+Facebook", status_code=status.HTTP_303_SEE_OTHER)
+
+    tokens = token_response.json()
+    access_token = tokens.get("access_token")
+    if not access_token:
+        logger.error("No access_token returned by Facebook token endpoint")
+        return RedirectResponse("/login?error=Invalid+token+response+from+Facebook", status_code=status.HTTP_303_SEE_OTHER)
+
+    # Step 2: Fetch profile from Facebook Graph API
+    profile_url = "https://graph.facebook.com/v26.0/me"
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as http_client:
+            profile_response = await http_client.get(
+                profile_url,
+                params={"fields": "id,name"},
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/json"
+                }
+            )
+    except Exception as exc:
+        logger.error("Network error fetching Facebook profile: %s", type(exc).__name__)
+        return RedirectResponse("/login?error=Unable+to+retrieve+profile+from+Facebook.+Please+try+again.", status_code=status.HTTP_303_SEE_OTHER)
+
+    if profile_response.status_code != 200:
+        logger.error("Facebook profile request failed with HTTP %d", profile_response.status_code)
+        return RedirectResponse("/login?error=Failed+to+retrieve+profile+information+from+Facebook", status_code=status.HTTP_303_SEE_OTHER)
+
+    profile = profile_response.json()
+    fb_id = profile.get("id")
+    fb_name = profile.get("name") or ""
+    fb_email = profile.get("email")
+
+    if not fb_id:
+        logger.error("Facebook profile did not contain a user ID")
+        return RedirectResponse("/login?error=Facebook+profile+missing+user+identifier", status_code=status.HTTP_303_SEE_OTHER)
+
+    # Step 3: Find customer by OAuth provider/provider ID or verified email
+    user = query_one(
+        "SELECT id, full_name, email, role, oauth_provider, oauth_id FROM users WHERE oauth_provider = 'facebook' AND oauth_id = ?",
+        (str(fb_id),)
+    )
+
+    # If not found by fb_id, check if user exists by email (if email was provided)
+    if not user and fb_email:
+        email_clean = fb_email.strip().lower()
+        user = query_one(
+            "SELECT id, full_name, email, role, oauth_provider, oauth_id FROM users WHERE email = ?",
+            (email_clean,)
+        )
+        if user:
+            # Step 4: Securely link Facebook to that existing account instead of creating a duplicate
+            with get_db() as conn:
+                conn.execute(
+                    """
+                    UPDATE users
+                    SET oauth_provider = 'facebook', oauth_id = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    (str(fb_id), user["id"])
+                )
+            save_db_snapshot()
+            user = query_one(
+                "SELECT id, full_name, email, role, oauth_provider, oauth_id FROM users WHERE id = ?",
+                (user["id"],)
+            )
+
+    # Step 5: Otherwise create a new customer account using Facebook profile info
+    # Safely handle Facebook accounts that do not provide an email by assigning a deterministic unique placeholder email
+    if not user:
+        display_name = fb_name.strip() if fb_name and fb_name.strip() else f"Facebook Client {str(fb_id)[-4:]}"
+        if fb_email:
+            email_to_store = fb_email.strip().lower()
+        else:
+            email_to_store = f"facebook_{fb_id}@stylezone.local"
+
+        random_password_hash = hash_password(secrets.token_urlsafe(32))
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO users (full_name, email, password_hash, role, oauth_provider, oauth_id, created_at, updated_at)
+                VALUES (?, ?, ?, 'customer', 'facebook', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                (display_name, email_to_store, random_password_hash, str(fb_id))
+            )
+            new_user_id = cursor.lastrowid
+        save_db_snapshot()
+        user = query_one(
+            "SELECT id, full_name, email, role, oauth_provider, oauth_id FROM users WHERE id = ?",
+            (new_user_id,)
+        )
+
+    # Step 6: Call existing create_session(user["id"], user["role"])
+    session_id = create_session(user["id"], user["role"])
+
+    # Step 7: Set SESSION_COOKIE_NAME cookie using standard secure cookie settings
+    redirect_resp = RedirectResponse("/account", status_code=status.HTTP_303_SEE_OTHER)
+    is_secure = (request.url.scheme == "https") or (request.headers.get("x-forwarded-proto") == "https") or (not DEBUG)
+
+    redirect_resp.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_id,
+        max_age=SESSION_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        secure=is_secure
+    )
+
+    # Step 8: Redirect to /account
+    return redirect_resp
 
 @router.get("/api/auth/oauth-status")
 async def oauth_status():
