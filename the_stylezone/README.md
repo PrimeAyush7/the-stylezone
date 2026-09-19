@@ -1,4 +1,4 @@
-# The Stylezone — Full-Stack Luxury Barber & Grooming Web Application
+# The Stylezone -- Full-Stack Luxury Barber & Grooming Web Application
 
 > **Official Business Name:** The Stylezone  
 > **Location:** Street no 32, Vipin Garden Extension, Dwarka Mor, Delhi  
