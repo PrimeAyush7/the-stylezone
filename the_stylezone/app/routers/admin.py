@@ -389,7 +389,7 @@ async def admin_update_hours(request: Request):
     form = await request.form()
     await validate_csrf(request, form.get("csrf_token"))
 
-    booking_enabled = "1" if form.get("booking_enabled") == "on" else "0"
+    booking_enabled = "1" if form.get("booking_enabled") in ("on", "1", "true") else "0"
     slot_duration = form.get("slot_duration_minutes", "30")
     set_setting("booking_enabled", booking_enabled, "Master booking toggle")
     set_setting("slot_duration_minutes", slot_duration, "Default slot duration in minutes")
@@ -398,12 +398,35 @@ async def admin_update_hours(request: Request):
     set_setting("hours_configured", "1", "Hours configured by admin")
 
     for dow in range(7):
-        is_open = 1 if form.get(f"is_open_{dow}") == "on" else 0
         open_time = form.get(f"open_time_{dow}", "").strip() or None
         close_time = form.get(f"close_time_{dow}", "").strip() or None
-        has_break = 1 if form.get(f"has_break_{dow}") == "on" else 0
+        has_break = 1 if form.get(f"has_break_{dow}") in ("on", "1", "true") else 0
         break_start = form.get(f"break_start_{dow}", "").strip() or None
         break_end = form.get(f"break_end_{dow}", "").strip() or None
+
+        # Determine is_open based on submitted fields:
+        # Priority 1: Check if weekly_off_{dow} is explicitly submitted
+        if f"weekly_off_{dow}" in form:
+            is_weekly_off = form.get(f"weekly_off_{dow}") in ("on", "1", "true")
+            is_open = 0 if is_weekly_off else 1
+        # Priority 2: Check if is_open_{dow} is explicitly submitted
+        elif f"is_open_{dow}" in form:
+            is_open = 1 if form.get(f"is_open_{dow}") in ("on", "1", "true") else 0
+        else:
+            # Checkbox was unchecked or omitted.
+            # If open_time and close_time are provided (e.g. 08:00 and 22:00),
+            # the day is open. If empty, the day is closed / weekly off.
+            if open_time and close_time:
+                is_open = 1
+            else:
+                is_open = 0
+
+        # When open but no times entered, default to 08:00 - 22:00
+        if is_open == 1:
+            if not open_time:
+                open_time = "08:00"
+            if not close_time:
+                close_time = "22:00"
 
         execute_query("""
         UPDATE business_hours 
@@ -411,6 +434,7 @@ async def admin_update_hours(request: Request):
         WHERE day_of_week = ?
         """, (is_open, open_time, close_time, has_break, break_start, break_end, dow))
 
+    save_db_snapshot()
     return RedirectResponse("/admin/hours?success=Business+hours+saved+successfully", status_code=303)
 
 @router.get("/holidays", response_class=HTMLResponse)
