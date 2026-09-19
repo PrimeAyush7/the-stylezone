@@ -185,10 +185,6 @@ To create your primary administrator account or reset the admin password, run:
 python3 scripts/create_admin.py --email your-admin@example.com --password "YourSecretPassword123!" --name "Shop Owner"
 ```
 
-Default credentials seeded for testing:
-- **Email:** `your-admin@example.com`
-- **Password:** `YourSecurePasswordHere`
-
 Login at: **`http://localhost:8000/admin/login`**
 
 ---
@@ -343,5 +339,3 @@ When the business decides to accept online payments:
 | **Address** | Street no 32, Vipin Garden Extension, Dwarka Mor, Delhi |
 | **Confirmed Services** | 1. Haircut (₹100)<br>2. Beard (₹70)<br>3. Haircut + Beard (₹150)<br>4. Facial (₹300)<br>5. D-Tan (₹300) |
 | **Aesthetic** | Luxury Black & Gold, Dark/Light Mode, Mobile-First |
-| **Admin Route** | `/admin` |
-| **Default Admin** | `your-admin@example.com` / `YourSecurePasswordHere` |
