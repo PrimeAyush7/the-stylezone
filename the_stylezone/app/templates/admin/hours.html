@@ -47,7 +47,7 @@
                 <thead>
                     <tr>
                         <th>Day</th>
-                        <th>Status</th>
+                        <th>Weekly Off</th>
                         <th>Opening Time</th>
                         <th>Closing Time</th>
                         <th>Break Period</th>
@@ -59,15 +59,15 @@
                         <td><strong>{{ h.day_name }}</strong></td>
                         <td>
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="checkbox" name="is_open_{{ h.day_of_week }}" {% if h.is_open %}checked{% endif %} style="width: 18px; height: 18px;">
-                                <span>{{ 'Open' if h.is_open else 'Weekly Off' }}</span>
+                                <input type="checkbox" name="weekly_off_{{ h.day_of_week }}" id="weekly_off_{{ h.day_of_week }}" {% if h.is_open == 0 and hours_configured %}checked{% endif %} style="width: 18px; height: 18px;">
+                                <span>Weekly Off</span>
                             </label>
                         </td>
                         <td>
-                            <input type="time" name="open_time_{{ h.day_of_week }}" value="{{ h.open_time or '09:00' }}" class="form-control" style="width: 130px;">
+                            <input type="time" name="open_time_{{ h.day_of_week }}" value="{{ h.open_time or '08:00' }}" class="form-control" style="width: 130px;">
                         </td>
                         <td>
-                            <input type="time" name="close_time_{{ h.day_of_week }}" value="{{ h.close_time or '21:00' }}" class="form-control" style="width: 130px;">
+                            <input type="time" name="close_time_{{ h.day_of_week }}" value="{{ h.close_time or '22:00' }}" class="form-control" style="width: 130px;">
                         </td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 8px;">
