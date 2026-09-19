@@ -169,12 +169,13 @@ def run_verification():
 
     # 8. Real Slot Availability With Admin Configured Hours & Weekly Off
     print("\n[CHECK 8/17] Verifying Availability With Admin Configured Hours & Weekly Off...")
-    sunday = (date.today() + timedelta(days=2)).strftime("%Y-%m-%d")
+    days_ahead = (6 - date.today().weekday()) % 7
+    if days_ahead == 0: days_ahead = 7
+    sunday = (date.today() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
     r_sunday = client.get(f"/api/public/availability?date={sunday}&service_id=1")
     assert r_sunday.json()["is_open"] is False, "Sunday must be closed (weekly off)"
     print("  ✓ Weekly off day correctly reported as closed with zero slots")
-
-    open_day = (date.today() + timedelta(days=3)).strftime("%Y-%m-%d") # Monday
+    open_day = (date.today() + timedelta(days=days_ahead + 1)).strftime("%Y-%m-%d") # Monday
     r_avail_now = client.get(f"/api/public/availability?date={open_day}&service_id=1")
     avail_now_data = r_avail_now.json()
     assert avail_now_data["available"] is True
