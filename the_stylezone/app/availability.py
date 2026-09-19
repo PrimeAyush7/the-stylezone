@@ -75,10 +75,12 @@ def calculate_availability(target_date_str: str, service_id: Optional[int] = Non
             "slots": []
         }
 
-    # Day of week
+    # Day of week - retrieve configured business hours from database
     dow = target_date.weekday()
     hours = query_one("SELECT * FROM business_hours WHERE day_of_week = ?", (dow,))
-    if not hours or hours["is_open"] == 0 or not hours["open_time"] or not hours["close_time"]:
+    
+    # Weekly Off is respected only when the corresponding database setting is enabled (is_open == 0)
+    if not hours or hours["is_open"] == 0:
         day_name = hours["day_name"] if hours else "This day"
         return {
             "date": target_date_str,
@@ -88,8 +90,10 @@ def calculate_availability(target_date_str: str, service_id: Optional[int] = Non
             "slots": []
         }
 
-    open_min = parse_time_to_minutes(hours["open_time"])
-    close_min = parse_time_to_minutes(hours["close_time"])
+    open_time_str = hours["open_time"] or "08:00"
+    close_time_str = hours["close_time"] or "22:00"
+    open_min = parse_time_to_minutes(open_time_str)
+    close_min = parse_time_to_minutes(close_time_str)
 
     slot_duration = 30
     if service_id:
@@ -172,8 +176,8 @@ def calculate_availability(target_date_str: str, service_id: Optional[int] = Non
         "available": available_count > 0,
         "is_configured": True,
         "day_name": hours["day_name"],
-        "open_time": hours["open_time"],
-        "close_time": hours["close_time"],
+        "open_time": open_time_str,
+        "close_time": close_time_str,
         "slot_duration": slot_duration,
         "total_slots": len(slots),
         "available_count": available_count,
@@ -226,13 +230,16 @@ def create_booking_atomic(
             dow = target_date.weekday()
             cursor.execute("SELECT * FROM business_hours WHERE day_of_week = ?", (dow,))
             hours = cursor.fetchone()
-            if not hours or hours["is_open"] == 0 or not hours["open_time"] or not hours["close_time"]:
-                raise ValueError(f"The shop is closed on this day ({appointment_date}).")
+            if not hours or hours["is_open"] == 0:
+                day_name = hours["day_name"] if hours else "This day"
+                raise ValueError(f"The shop is closed on {day_name}s (Weekly Off).")
 
-            open_min = parse_time_to_minutes(hours["open_time"])
-            close_min = parse_time_to_minutes(hours["close_time"])
+            open_time_str = hours["open_time"] or "08:00"
+            close_time_str = hours["close_time"] or "22:00"
+            open_min = parse_time_to_minutes(open_time_str)
+            close_min = parse_time_to_minutes(close_time_str)
             if start_min < open_min or end_min > close_min:
-                raise ValueError(f"Selected time {start_time}-{end_time} is outside operating hours ({hours['open_time']}-{hours['close_time']}).")
+                raise ValueError(f"Selected time {start_time}-{end_time} is outside operating hours ({open_time_str}-{close_time_str}).")
 
             if hours["has_break"] == 1 and hours["break_start"] and hours["break_end"]:
                 b_start = parse_time_to_minutes(hours["break_start"])
